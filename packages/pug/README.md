@@ -161,6 +161,42 @@ This is a small, self-contained format (no external dependency); it is
 *not* a full YAML parser/serializer, just the tree-shaped subset that
 pug's whitespace idiom naturally expresses.
 
+### Pug as tree
+
+`pug.data()` coerces an indented document into JSON/YAML.  When you want
+to keep the **structure** instead — tags, attributes, loops, conditionals
+— use `pug.tree()`.  It runs lex + parse only (no codegen, no filesystem)
+and returns an array of plain node objects, so a game engine, editor, or
+design tool can consume an authored pug document directly:
+
+```js
+pug.tree([
+  'card_game',
+  '  hand(owner="other")',
+  '    card(card=Hidden)',
+  '  field',
+  '    row(type="active", owner="player")',
+].join('\n'))
+// [ { tag: 'card_game', attrs: {},
+//     children: [
+//       { tag: 'hand', attrs: { owner: 'other' },
+//         children: [ { tag: 'card', attrs: { card: 'Hidden' }, children: [] } ] },
+//       { tag: 'field', attrs: {}, children: [
+//           { tag: 'row', attrs: { type: 'active', owner: 'player' }, children: [] } ] } ] } ]
+```
+
+Node shapes (one key each): `{ tag, attrs, children }`, `{ text }`,
+`{ code, buffer }`, `{ each }`, `{ if }`, `{ while }`, `{ case }`,
+`{ filter }`, `{ include }` / `{ extends }` / `{ rawInclude }` (markers,
+not inlined), `{ doctype }`, `{ comment }`, `{ mixin }` / `{ use }`,
+`{ yield }`.  Attribute values are normalized (quotes stripped, repeated
+names merged into arrays).  Pass `{ positions: true }` to add `line` /
+`column` to every node.
+
+This is what turns the app-layout sketches (card game, dashboard, editor,
+...) into machine-consumable trees: pug stays the authoring language, and
+any consumer reads the JSON.
+
 ### Styles and scripts
 
 Embed CSS/JS with a **pipeless block** (`style.` / `script.`).  The

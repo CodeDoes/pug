@@ -50,6 +50,7 @@
   "files": [
     "lib/index.js",
     "lib/data.js",
+    "lib/tree.js",
     "register.js"
   ],
   "browser": {

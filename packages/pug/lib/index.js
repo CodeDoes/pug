@@ -22,6 +22,7 @@ var generateCode = require('pug-code-gen');
 var runtime = require('pug-runtime');
 var runtimeWrap = require('pug-runtime/wrap');
 var dataModule = require('./data');
+var treeModule = require('./tree');
 
 /**
  * Name for detection
@@ -44,6 +45,15 @@ exports.runtime = runtime;
 exports.data = dataModule.data;
 exports.toYaml = dataModule.toYaml;
 exports.renderData = dataModule.renderData;
+
+/**
+ * Compile pug source into a plain JSON tree (no code generation).
+ *
+ * `pug.tree(str, options)` → array of node objects
+ * `{ tag, attrs, children } | { text } | { code } | { each } | { if } | ...`
+ */
+
+exports.tree = treeModule;
 
 /**
  * Template function cache.
