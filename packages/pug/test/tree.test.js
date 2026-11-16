@@ -156,4 +156,52 @@ describe('pug.tree()', function() {
       {rawInclude: 'some.styl', filters: ['stylus']},
     ]);
   });
+
+  it('collapses piped and literal-block script/style into a single body string', function() {
+    var piped = pug.tree(
+      [
+        'html',
+        '  head',
+        '    script',
+        '      | x = 1',
+        '      | alert(x)',
+      ].join('\n')
+    );
+    var script = piped[0].children[0].children[0];
+    assert.strictEqual(script.tag, 'script');
+    assert.strictEqual(script.body, 'x = 1\nalert(x)');
+    assert.ok(!('children' in script));
+
+    var literal = pug.tree(
+      [
+        'html',
+        '  head',
+        '    script.',
+        '      if (foo) {',
+        '        bar();',
+        '      }',
+      ].join('\n')
+    );
+    assert.strictEqual(
+      literal[0].children[0].children[0].body,
+      'if (foo) {\n  bar();\n}'
+    );
+  });
+
+  it('keeps children (no body) for a script that holds markup', function() {
+    var t = pug.tree('body\n  script\n    div\n');
+    var script = t[0].children[0];
+    assert.strictEqual(script.tag, 'script');
+    assert.ok(!('body' in script));
+    assert.deepStrictEqual(script.children, [
+      {tag: 'div', attrs: {}, children: []},
+    ]);
+  });
+
+  it('splits a leading :filter out of the tag name', function() {
+    var t = pug.tree('head\n  script:coffee\n    x = 1\n');
+    var script = t[0].children[0];
+    assert.strictEqual(script.tag, 'script');
+    assert.strictEqual(script.filter, 'coffee');
+  });
 });

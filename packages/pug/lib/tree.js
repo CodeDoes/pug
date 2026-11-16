@@ -71,14 +71,19 @@ function toTree(node, positions) {
       if (node.type === 'InterpolatedTag') {
         out.tagExpr = node.expr;
       } else {
-        out.tag = node.name;
+        splitTagFilter(node.name, out);
       }
       out.attrs = attrsToMap(
         node.attrs,
         node.attributeBlocks,
         node.selfClosing
       );
-      out.children = childrenOf(node.block, positions);
+      var body = literalBody(node, out.tag);
+      if (body !== undefined) {
+        out.body = body;
+      } else {
+        out.children = childrenOf(node.block, positions);
+      }
       break;
     case 'Text':
       out = {text: node.val};
@@ -263,6 +268,47 @@ function normalizeAttrValue(val) {
     return v.slice(1, -1);
   }
   return v;
+}
+
+/**
+ * Split a leading `:filter` out of a tag name (`style:stylus` → tag
+ * `style`, filter `stylus`).  A tag with no colon is unchanged.
+ */
+function splitTagFilter(name, out) {
+  var i = name.indexOf(':');
+  if (i === -1) {
+    out.tag = name;
+    return;
+  }
+  out.tag = name.slice(0, i);
+  out.filter = name.slice(i + 1);
+}
+
+/**
+ * For `script` / `style` tags whose block is plain text, return the
+ * concatenated source as a single `body` string (the same thing pug's
+ * codegen emits).  For every other tag, or a block that holds markup,
+ * return `undefined` so the node keeps its `children` instead.
+ */
+function literalBody(node, tag) {
+  if (tag !== 'script' && tag !== 'style') {
+    return undefined;
+  }
+  var block = node.block;
+  if (!block || !block.nodes || !block.nodes.length) {
+    return undefined;
+  }
+  var allText = block.nodes.every(function(n) {
+    return n.type === 'Text';
+  });
+  if (!allText) {
+    return undefined;
+  }
+  return block.nodes
+    .map(function(n) {
+      return n.val;
+    })
+    .join('');
 }
 
 module.exports = tree;

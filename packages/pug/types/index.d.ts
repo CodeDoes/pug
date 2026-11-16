@@ -18,7 +18,12 @@ export interface PugRuntime {
   interpolate(val: unknown, line?: number): string;
   concat(val: unknown, line?: number): string;
   attrs(obj: object, escaped: boolean): string;
-  attr(name: string, val: unknown, quoted: boolean, mustEscape: boolean): string;
+  attr(
+    name: string,
+    val: unknown,
+    quoted: boolean,
+    mustEscape: boolean,
+  ): string;
   [key: string]: unknown;
 }
 
@@ -32,7 +37,10 @@ export const name: string;
  * Global registry of custom filters.  A filter receives the block text
  * and the current options and returns the transformed string.
  */
-export const filters: Record<string, (text: string, options: PugOptions) => string>;
+export const filters: Record<
+  string,
+  (text: string, options: PugOptions) => string
+>;
 
 /** Template function cache keyed by filename. */
 export const cache: Record<string, unknown>;
@@ -102,7 +110,7 @@ export type DataValue =
   | boolean
   | null
   | DataValue[]
-  | { [key: string]: DataValue };
+  | {[key: string]: DataValue};
 
 /**
  * Parse a pug-style indented data document into a plain value
@@ -134,17 +142,26 @@ export interface PugNodeBase {
   column?: number;
 }
 
+/**
+ * A tag node.  A `tag:filter` name is split into `tag` + `filter`.
+ * `script` / `style` tags whose block is plain text carry a single
+ * `body` string instead of `children`.
+ */
 export interface PugTagNode extends PugNodeBase {
   tag: string;
+  /** A filter name, when the tag was authored as `tag:filter`. */
+  filter?: string;
+  /** The script / style source, when the block is plain text. */
+  body?: string;
   attrs: PugAttrMap;
-  children: PugTreeNode[];
+  children?: PugTreeNode[];
 }
 
 /** A tag whose name is an expression, e.g. `#{expr}`. */
 export interface PugTagExprNode extends PugNodeBase {
   tagExpr: string;
   attrs: PugAttrMap;
-  children: PugTreeNode[];
+  children?: PugTreeNode[];
 }
 
 export interface PugTextNode extends PugNodeBase {
@@ -158,7 +175,7 @@ export interface PugCodeNode extends PugNodeBase {
 }
 
 export interface PugEachNode extends PugNodeBase {
-  each: { key?: string; val: string; obj: string };
+  each: {key?: string; val: string; obj: string};
   children: PugTreeNode[];
 }
 
@@ -175,7 +192,7 @@ export interface PugWhileNode extends PugNodeBase {
 
 export interface PugCaseNode extends PugNodeBase {
   case: string;
-  when: { test: string; children: PugTreeNode[] }[];
+  when: {test: string; children: PugTreeNode[]}[];
   else?: PugTreeNode[];
 }
 
@@ -221,13 +238,13 @@ export interface PugBlockNode extends PugNodeBase {
 
 /** A `mixin` definition. */
 export interface PugMixinDefNode extends PugNodeBase {
-  mixin: { name: string; params?: string };
+  mixin: {name: string; params?: string};
   children: PugTreeNode[];
 }
 
 /** A `+name` mixin call; `children` holds any passed block content. */
 export interface PugUseNode extends PugNodeBase {
-  use: { name: string; args?: string };
+  use: {name: string; args?: string};
   attrs: PugAttrMap;
   children?: PugTreeNode[];
 }
@@ -299,7 +316,7 @@ export interface PugClientResult {
 
 export function compileClientWithDependenciesTracked(
   str: string,
-  options?: PugOptions
+  options?: PugOptions,
 ): PugClientResult;
 
 /**
@@ -310,10 +327,7 @@ export function compileClient(str: string, options?: PugOptions): string;
 /**
  * Compile a pug file for client use, returning just the function body.
  */
-export function compileFileClient(
-  path: string,
-  options?: PugOptions
-): string;
+export function compileFileClient(path: string, options?: PugOptions): string;
 
 /** Callback for the async render entry points. */
 export interface PugRenderCallback {
@@ -328,7 +342,7 @@ export function render(str: string, options?: PugOptions): string;
 export function render(
   str: string,
   options: PugOptions,
-  fn: PugRenderCallback
+  fn: PugRenderCallback,
 ): void;
 export function render(str: string, fn: PugRenderCallback): void;
 
@@ -340,7 +354,7 @@ export function renderFile(path: string, options?: PugOptions): string;
 export function renderFile(
   path: string,
   options: PugOptions,
-  fn: PugRenderCallback
+  fn: PugRenderCallback,
 ): void;
 export function renderFile(path: string, fn: PugRenderCallback): void;
 
@@ -348,5 +362,5 @@ export function renderFile(path: string, fn: PugRenderCallback): void;
 export function __express(
   path: string,
   options: PugOptions,
-  fn: (err: Error | null, body?: string) => void
+  fn: (err: Error | null, body?: string) => void,
 ): void;

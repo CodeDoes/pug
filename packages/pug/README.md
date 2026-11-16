@@ -187,11 +187,20 @@ pug.tree([
 
 Node shapes (one key each): `{ tag, attrs, children }`, `{ text }`,
 `{ code, buffer }`, `{ each }`, `{ if }`, `{ while }`, `{ case }`,
-`{ filter }`, `{ include }` / `{ extends }` / `{ rawInclude }` (markers,
-not inlined), `{ doctype }`, `{ comment }`, `{ mixin }` / `{ use }`,
-`{ yield }`.  Attribute values are normalized (quotes stripped, repeated
-names merged into arrays).  Pass `{ positions: true }` to add `line` /
-`column` to every node.
+`{ filter }` (a leading `:name` block), `{ include }` / `{ extends }` /
+`{ rawInclude }` (markers, not inlined), `{ doctype }`, `{ comment }`,
+`{ mixin }` / `{ use }`, `{ yield }`.  Attribute values are normalized
+(quotes stripped, repeated names merged into arrays).  Pass
+`{ positions: true }` to add `line` / `column` to every node.
+
+Two extra refinements a `tag` node can carry:
+
+ - `body` — a `<script>` / `<style>` whose block is plain text collapses
+   to a single string, e.g. `{ tag:'script', attrs:{}, body:'x = 1\n…' }`,
+   instead of an array of `text` fragments.  A `script` that holds
+   markup keeps `children` instead.
+ - `filter` — a `tag:filter` name is split: `style:stylus` →
+   `{ tag:'style', filter:'stylus', … }`.
 
 This is what turns the app-layout sketches (card game, dashboard, editor,
 ...) into machine-consumable trees: pug stays the authoring language, and
