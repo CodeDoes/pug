@@ -1,6 +1,9 @@
 'use strict';
 
 var makeError = require('pug-error');
+var fs = require('fs');
+var path = require('path');
+var resolve = require('resolve');
 
 function evalExpression(str, name, node) {
   var value;
@@ -90,6 +93,93 @@ function jsonFilter(str, options, node) {
 }
 
 /**
+ * :stylus filter — compiles a Stylus stylesheet to CSS.
+ *
+ *   :stylus
+ *     a = #4D90C8
+ *     body
+ *       color: a
+ *
+ *   // or include a .styl file:
+ *   include:stylus styles/app.styl
+ *
+ * The filter talks to the `stylus` compiler directly, so it works with
+ * just the (small, maintained) `stylus` package installed.  Filter
+ * options are applied via `renderer.set()`; a `define` option object is
+ * applied via `renderer.define()`, and `import` / `include` / `use`
+ * options accept a function or a require-able module name (matching the
+ * historical `jstransformer-stylus` behaviour).  `minify` sets
+ * stylus' `compress` option.  If `stylus` is not installed, the
+ * filter falls back to the legacy `jstransformer-stylus` layer.
+ */
+function loadStylus(currentDirectory) {
+  var stylus;
+  try {
+    stylus = require(resolve.sync('stylus', {
+      basedir: currentDirectory || process.cwd(),
+    }));
+  } catch (ex) {
+    var err = new Error(
+      'the ":stylus" filter requires the "stylus" package to be installed'
+    );
+    err.code = 'BUILTIN_FILTER_FALLBACK';
+    throw err;
+  }
+  return stylus;
+}
+
+function stylusFilter(str, options, node, funcName, currentDirectory) {
+  var stylus = loadStylus(currentDirectory);
+  options = options || {};
+  var source = str;
+  var filename = null;
+  if (funcName === 'renderFile') {
+    // include:stylus — `str` is the path of the .styl file
+    filename = path.resolve(str);
+    source = fs.readFileSync(filename, 'utf8');
+  }
+  var renderer = stylus(source);
+  if (filename) {
+    renderer.set('filename', filename);
+  }
+  Object.keys(options).forEach(function(key) {
+    if (
+      key === 'filename' ||
+      key === 'minify' ||
+      key === 'define' ||
+      key === 'import' ||
+      key === 'include' ||
+      key === 'use'
+    ) {
+      return;
+    }
+    renderer.set(key, options[key]);
+  });
+  if (options.minify) {
+    renderer.set('compress', true);
+  }
+  if (options.define) {
+    Object.keys(options.define).forEach(function(key) {
+      renderer.define(key, options.define[key]);
+    });
+  }
+  ['import', 'include', 'use'].forEach(function(method) {
+    var spec = options[method];
+    if (spec === undefined) {
+      return;
+    }
+    (Array.isArray(spec) ? spec : [spec]).forEach(function(item) {
+      if (typeof item === 'string') {
+        // jstransformer-compatible: a string is a require-able module
+        item = require(item)();
+      }
+      renderer[method](item);
+    });
+  });
+  return renderer.render();
+}
+
+/**
  * :xml filter — the block must be a JavaScript expression; the
  * evaluated value is serialized to well-formed XML.
  *
@@ -152,4 +242,5 @@ function xmlFilter(str, options, node) {
 module.exports = {
   json: jsonFilter,
   xml: xmlFilter,
+  stylus: stylusFilter,
 };

@@ -18,7 +18,21 @@ function getMinifyTransformerName(outputFormat) {
 function filter(name, str, options, currentDirectory, funcName) {
   funcName = funcName || 'render';
   if (builtins[name]) {
-    return builtins[name](str, options);
+    try {
+      return builtins[name](
+        str,
+        options,
+        undefined,
+        funcName,
+        currentDirectory
+      );
+    } catch (ex) {
+      // A builtin that can't be satisfied (e.g. optional peer dep) can
+      // opt into the legacy jstransformer layer by throwing this code.
+      if (!ex || ex.code !== 'BUILTIN_FILTER_FALLBACK') {
+        throw ex;
+      }
+    }
   }
   var trPath;
   try {
