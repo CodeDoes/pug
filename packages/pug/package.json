@@ -49,6 +49,7 @@
   },
   "files": [
     "lib/index.js",
+    "lib/data.js",
     "register.js"
   ],
   "browser": {

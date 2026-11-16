@@ -114,6 +114,10 @@ var html = pug.render('string of pug', merge(options, locals));
 
 // renderFile
 var html = pug.renderFile('filename.pug', merge(options, locals));
+
+// pug as data
+var obj = pug.data('config\n  app my-service\n  port 3000');
+var yaml = pug.renderData('config\n  app my-service\n  port 3000');
 ```
 
 ### Options
@@ -121,6 +125,73 @@ var html = pug.renderFile('filename.pug', merge(options, locals));
  - `filename`  Used in exceptions, and required when using includes
  - `compileDebug`  When `false` no debug instrumentation is compiled
  - `pretty`    Add pretty-indentation whitespace to output _(false by default)_
+### Pug as data
+
+Pug's indentation already describes trees, so the same syntax can
+describe **data**. Three helpers are exported:
+
+```js
+// parse an indented document into a plain JS value
+pug.data('config\n  app my-service\n  debug true\n  port 3000\n  tags\n    - a\n    - b')
+// => { config: { app: 'my-service', debug: true, port: 3000,
+//                tags: ['a', 'b'] } }
+
+// same, but serialized straight to YAML
+pug.renderData(doc)
+// => "config:\n  app: my-service\n  debug: true\n  port: 3000\n  tags:\n    - a\n    - b\n"
+
+// serialize any plain JS value to YAML
+pug.toYaml({ name: 'pug', version: 2 })
+// => "name: pug\nversion: 2\n"
+```
+
+Data grammar:
+
+ - Nesting is indentation only (spaces or tabs).
+ - `key` opens an object; its indented children become fields.
+ - `key value` (or `key: value`) is a scalar field; values coerce to
+   `true`/`false`, numbers, `null`/`~`, or strings (quote to force a
+   string).
+ - `- item` (also `*`/`+`) is a list item; a node whose children are all
+   bullets becomes an array.  A bullet with inline text plus indented
+   children becomes an object.
+ - Blank lines and `#` comments are ignored.
+
+This is a small, self-contained format (no external dependency); it is
+*not* a full YAML parser/serializer, just the tree-shaped subset that
+pug's whitespace idiom naturally expresses.
+
+### Styles and scripts
+
+Embed CSS/JS with a **pipeless block** (`style.` / `script.`).  The
+content is written literally into the element, and `#{}` interpolation
+works inside it:
+
+```pug
+html
+  head
+    style.
+      body { padding: #{n}px; }
+  body
+    script.
+      var x = 1;
+```
+
+Inline (element-attribute) styles are also native:
+
+```pug
+p(style="color: red") hello
+p(style={color: c, fontSize: px}) hello
+```
+
+For fully verbatim (un-escaped) content use the `:cdata` filter, e.g.
+a `:cdata` filter block wrapping the content:
+
+```pug
+div
+  :cdata
+    <verbatim>
+```
 
 ## Browser Support
 

@@ -21,6 +21,7 @@ var link = require('pug-linker');
 var generateCode = require('pug-code-gen');
 var runtime = require('pug-runtime');
 var runtimeWrap = require('pug-runtime/wrap');
+var dataModule = require('./data');
 
 /**
  * Name for detection
@@ -33,6 +34,16 @@ exports.name = 'Pug';
  */
 
 exports.runtime = runtime;
+
+/**
+ * Pug-as-data helpers: parse an indented pug-style document into a
+ * plain value (`data`), serialize a value to YAML (`toYaml`), or do
+ * both (`renderData`).
+ */
+
+exports.data = dataModule.data;
+exports.toYaml = dataModule.toYaml;
+exports.renderData = dataModule.renderData;
 
 /**
  * Template function cache.
