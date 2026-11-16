@@ -25,6 +25,7 @@
     "url": "https://github.com/pugjs/pug/tree/master/packages/pug"
   },
   "main": "lib",
+  "types": "types/index.d.ts",
   "dependencies": {
     "pug-code-gen": "^2.0.2",
     "pug-filters": "^3.1.1",
@@ -51,6 +52,7 @@
     "lib/index.js",
     "lib/data.js",
     "lib/tree.js",
+    "types/index.d.ts",
     "register.js"
   ],
   "browser": {

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "pug": ["./types/index.d.ts"]
+    }
+  },
+  "files": ["types/index.d.ts", "types/consume.ts"]
+}
