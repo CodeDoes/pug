@@ -184,6 +184,9 @@ function toTree(node, positions) {
           },
           attrs: attrsToMap(node.attrs || [], node.attributeBlocks || []),
         };
+        if (node.block && node.block.nodes && node.block.nodes.length) {
+          out.children = childrenOf(node.block, positions);
+        }
       } else {
         out = {
           mixin: {name: node.name, params: node.args},
